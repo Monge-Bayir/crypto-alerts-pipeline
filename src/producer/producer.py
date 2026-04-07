@@ -1,3 +1,4 @@
+import time
 from json import JSONDecoder
 
 from kafka import KafkaProducer
@@ -18,11 +19,11 @@ def create_producer() -> KafkaProducer:
 
 
 def generate_fake_price(valute: str, price: float) -> dict:
-    fake_price = random.uniform(-100, 100)
+    fake_price = random.uniform(-4000, 4000)
     return {
         'valute': valute,
         'price': round(price + fake_price, 2),
-        'event_loop': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        'event_date': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     }
 
 
@@ -35,6 +36,8 @@ def main() -> None:
             producer.flush() # НЕМЕДЛЕННО отправляем ВСЕ сообщения из буфера и ЖДЁМ подтверждения
 
             print(f'Успешно отправилось {btc_event}')
+
+            time.sleep(5)
 
     except KeyboardInterrupt:
         pass
