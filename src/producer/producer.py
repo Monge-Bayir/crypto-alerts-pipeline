@@ -1,11 +1,11 @@
 import time
-from json import JSONDecoder
-
+from config.settings import KAFKA_BOOTSTRAP_SERVERS, KAFKA_TOPIC, PRICE_SOURCE
 from kafka import KafkaProducer
 import json
-import random
-import datetime
+from src.producer.price_source import get_real_price, get_mock_price
+from src.utils.logger import get_logger
 
+logger = get_logger('producer')
 
 def create_producer() -> KafkaProducer:
     """
@@ -13,30 +13,32 @@ def create_producer() -> KafkaProducer:
     """
 
     return KafkaProducer(
-        bootstrap_servers='localhost:9092',
+        bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
         value_serializer=lambda v: json.dumps(v).encode('utf-8')
     )
 
 
-def generate_fake_price(valute: str, price: float) -> dict:
-    fake_price = random.uniform(-4000, 4000)
-    return {
-        'valute': valute,
-        'price': round(price + fake_price, 2),
-        'event_date': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    }
+def generate_price() -> list[dict]:
+    if PRICE_SOURCE == 'real':
+        btc_event = get_real_price('BTSUSDT')
+        eth_event = get_real_price("ETHUSDT")
+    else:
+        btc_event = get_mock_price('BTSUSDT')
+        eth_event = get_mock_price("ETHUSDT")
+
+    return [btc_event, eth_event]
 
 
 def main() -> None:
     producer = create_producer() #создаем продюсер
     try:
+        events = generate_price()
         while True:
-            btc_event = generate_fake_price('BTC', 65000)
-            producer.send('crypto_prices', btc_event) #отправляем сообщение в kafka
-            producer.flush() # НЕМЕДЛЕННО отправляем ВСЕ сообщения из буфера и ЖДЁМ подтверждения
+            for event in events:
+                producer.send(KAFKA_TOPIC, event)
+                logger.info(f"Sent event: {event}")
 
-            print(f'Успешно отправилось {btc_event}')
-
+            producer.flush()
             time.sleep(5)
 
     except KeyboardInterrupt:
