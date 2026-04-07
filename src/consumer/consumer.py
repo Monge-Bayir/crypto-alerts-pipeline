@@ -5,6 +5,7 @@ import json
 import pandas as pd
 from config.settings import BOT_TOKEN, CHAT_ID, KAFKA_BOOTSTRAP_SERVERS, KAFKA_CONSUMER_GROUP, KAFKA_TOPIC, ALERT_THRESHOLD
 from src.utils.logger import get_logger
+from src.utils.repository import save_alert_event, save_price_event
 
 
 logger = get_logger('consumer')
@@ -40,6 +41,12 @@ def main() -> None:
 
             current_symbol = event['symbol']
             current_price = float(event['price'])
+            save_price_event(
+                symbol=current_symbol,
+                price=current_price,
+                event_time=event["event_date"],
+                source=event.get("source", "unknown"),
+            )
 
             valute_df = df[df['symbol'] == current_symbol].copy()
 
@@ -61,6 +68,13 @@ def main() -> None:
                         f"Падение: {abs(drop_pct):.2f}%"
                     )
                     send_telegram_alert(text=alert_text, bot_token=BOT_TOKEN, chat_id=CHAT_ID)
+                    save_alert_event(
+                        symbol=current_symbol,
+                        current_price=current_price,
+                        rolling_avg=rolling_avg,
+                        drop_pct=drop_pct,
+                        alert_time=event["event_date"],
+                    )
                     logger.info(f'Валюта уменьшилась на {round(abs(drop_pct), 2)}%')
 
             else:
