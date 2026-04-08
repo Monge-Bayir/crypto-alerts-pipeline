@@ -32,8 +32,8 @@ def generate_price() -> list[dict]:
 def main() -> None:
     producer = create_producer() #создаем продюсер
     try:
-        events = generate_price()
         while True:
+            events = generate_price()
             for event in events:
                 producer.send(KAFKA_TOPIC, event)
                 logger.info(f"Sent event: {event}")

@@ -70,9 +70,9 @@ def main() -> None:
                     send_telegram_alert(text=alert_text, bot_token=BOT_TOKEN, chat_id=CHAT_ID)
                     save_alert_event(
                         symbol=current_symbol,
-                        current_price=current_price,
-                        rolling_avg=rolling_avg,
-                        drop_pct=drop_pct,
+                        current_price=float(current_price),
+                        rolling_avg=float(rolling_avg),
+                        drop_pct=float(drop_pct),
                         alert_time=event["event_date"],
                     )
                     logger.info(f'Валюта уменьшилась на {round(abs(drop_pct), 2)}%')

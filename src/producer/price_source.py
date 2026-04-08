@@ -6,7 +6,7 @@ from src.utils.logger import get_logger
 
 
 def get_mock_price(symbol: str) -> dict:
-    fake_price = random.uniform(-2000, 2000)
+    fake_price = random.randint(-5000, 5000)
     return {
         "symbol": symbol,
         'price': 65000 + fake_price,
